@@ -8,10 +8,12 @@ const SalesTracker = () => {
   const [collection, setCollection] = useState(null)
   const [error, setError] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [hasClicked, setHasClicked] = useState(false)
 
   const periods = ['one_day', 'seven_day', 'thirty_day', 'total']
 
   const getCollection = async () => {
+    setHasClicked(true)
     setCollection(null)
     setLoading(true)
     const url = `https://api.blockspan.com/v1/collections/contract/${contractAddress}?chain=${blockchain}`;
@@ -35,7 +37,7 @@ const SalesTracker = () => {
   };
 
   const checkData = (data) => {
-    if (!data || isNaN(data)) {
+    if (data === null || isNaN(data)) {
         return 'N/A'
     } 
     return data
@@ -67,12 +69,13 @@ const SalesTracker = () => {
       {error && !loading && (
         <p className='errorMessage'>Error: verify chain and contract address are valid</p>
       )}
-      {collection && collection.data && (
+      {collection && collection.data && collection.data.exchange_data && collection.data.exchange_data[0].stats ? (
         <p style={{ fontWeight: 'bold', textAlign: 'center' }}>
-          Token Type: {collection.data.token_type ? collection.data.token_type : 'N/A'} | 
-          Total Tokens: {checkData(collection.data.total_tokens)} | 
-          Total Transfers: {checkData(collection.data.total_transfers)}
+          Floor Price: {checkData(collection.data.exchange_data[0].stats.floor_price)} | 
+          Market Cap: {checkData(parseFloat(collection.data.exchange_data[0].stats.market_cap).toFixed(3))}
         </p>
+      ) : !error && hasClicked && (
+        <p className='message'>No sales data found for this collection!</p>
       )}
       {collection && collection.data && collection.data.exchange_data && (
         <div>
